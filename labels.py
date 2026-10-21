@@ -3,7 +3,7 @@ LABELS: dict[str, str] = {
         "Emails relacionados com pedidos de informação sobre contratos, atendimento "
         "geral, contactos, moradas, horários, balcão ou lojas."
     ),
-    "Balção Digital": (
+    "Balcão Digital": (
         "Emails relacionados com pedidos de informação ou exposição de "
         "dificuldades/problemas com o balcão digital, a app, passwords, e acessos."
     ),

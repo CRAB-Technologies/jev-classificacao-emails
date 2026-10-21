@@ -39,17 +39,19 @@ EXTERNAL = re.compile(
     r"[ \t]*External information\. For external parties or clients\.\s*", re.IGNORECASE
 )
 
-# Nomes em LastClassifications -> chaves de LABELS.
+# As referências (crab team e LastClassifications) escrevem as categorias de forma diferente
+# das chaves de LABELS ("Tarifa Social" vs "Tarifa social", "Emissão 2ª Vias" vs "Emissão de
+# 2ª vias", espaços a mais). Comparamos por uma chave sem maiúsculas, espaços nem preposições.
+_STOPWORDS = {"de", "da", "das", "do", "dos"}
 # "Triagem Manual" não é categoria, fica sem referência.
-LAST_TO_LABEL = {
-    "Balcão Digital": "Balção Digital",
-    "Faturação - Pagamento Faturas": "Faturação - Pagamento  das faturas",
-    "Faturação - Emissão 2ª Vias": "Faturação - Emissão de 2ª vias",
-    "Faturação - Extrato Conta Corrente": "Faturação - Extrato da Conta Corrente",
-    "Tarifa Social": "Tarifa social",
-    "Tarifa Familiar": "Tarifa familiar",
-    "Triagem Manual": None,
-}
+NOT_A_CATEGORY = {"triagem manual"}
+
+
+def _key(label: str) -> str:
+    return " ".join(w for w in label.lower().split() if w not in _STOPWORDS)
+
+
+_CANONICAL = {_key(label): label.strip() for label in LABELS}
 
 
 def clean_body(body: str) -> str:
@@ -77,8 +79,10 @@ def classify(client: TypeSafeClient, subject: str, body: str):
 def normalize(label) -> str | None:
     if pd.isna(label):
         return None
-    label = LAST_TO_LABEL.get(label.strip(), label)
-    return label.strip() if label else None
+    key = _key(label)
+    if key in NOT_A_CATEGORY:
+        return None
+    return _CANONICAL.get(key, label.strip())
 
 
 def predict(df: pd.DataFrame, workers: int) -> pd.DataFrame:
